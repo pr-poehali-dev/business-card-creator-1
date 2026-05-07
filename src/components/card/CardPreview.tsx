@@ -120,10 +120,13 @@ interface CardPreviewProps {
   fields: CardField[];
   cardStyle: CardStyle;
   copied: boolean;
+  publishedUrl: string | null;
+  publishing: boolean;
   onCopy: () => void;
+  onPublish: () => void;
 }
 
-export default function CardPreview({ fields, cardStyle, copied, onCopy }: CardPreviewProps) {
+export default function CardPreview({ fields, cardStyle, copied, publishedUrl, publishing, onCopy, onPublish }: CardPreviewProps) {
   return (
     <div className="lg:sticky lg:top-20 lg:self-start space-y-3">
       <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-0.5 flex items-center justify-between">
@@ -135,35 +138,40 @@ export default function CardPreview({ fields, cardStyle, copied, onCopy }: CardP
         <CardVisual fields={fields} style={cardStyle} />
       </div>
 
-      <div className="bg-card border border-border rounded-lg p-4">
-        <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2.5">Ссылка на визитку</div>
-        <div className="flex items-center gap-2 bg-secondary rounded-md px-3 py-2">
-          <Icon name="Link2" size={12} className="text-muted-foreground shrink-0" />
-          <span className="text-xs text-muted-foreground truncate flex-1 font-mono">vizitka.app/i/ivan-petrov</span>
-          <button onClick={onCopy} className="text-muted-foreground hover:text-foreground transition-colors">
-            <Icon name={copied ? "Check" : "Copy"} size={12} />
-          </button>
+      {publishedUrl && (
+        <div className="bg-card border border-border rounded-lg p-4">
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2.5">Ссылка на визитку</div>
+          <div className="flex items-center gap-2 bg-secondary rounded-md px-3 py-2">
+            <Icon name="Link2" size={12} className="text-muted-foreground shrink-0" />
+            <span className="text-xs text-muted-foreground truncate flex-1 font-mono">
+              {publishedUrl.replace(window.location.origin, "")}
+            </span>
+            <button onClick={onCopy} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
+              <Icon name={copied ? "Check" : "Copy"} size={12} />
+            </button>
+          </div>
+          <a
+            href={publishedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Icon name="ExternalLink" size={11} />
+            Открыть визитку
+          </a>
         </div>
-      </div>
+      )}
 
-      <div className="bg-card border border-border rounded-lg p-4">
-        <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Статистика</div>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: "Просмотров", value: "131" },
-            { label: "Поделились", value: "34" },
-          ].map(s => (
-            <div key={s.label} className="text-center py-1">
-              <div className="text-2xl font-semibold text-foreground">{s.value}</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wide">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <button className="w-full flex items-center justify-center gap-2 py-2.5 text-sm bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors font-medium">
-        <Icon name="Rocket" size={14} />
-        Опубликовать визитку
+      <button
+        onClick={onPublish}
+        disabled={publishing}
+        className="w-full flex items-center justify-center gap-2 py-2.5 text-sm bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors font-medium disabled:opacity-60"
+      >
+        {publishing
+          ? <span className="w-4 h-4 rounded-full border-2 border-background border-t-transparent animate-spin" />
+          : <Icon name={publishedUrl ? "RefreshCw" : "Rocket"} size={14} />
+        }
+        {publishing ? "Публикую..." : publishedUrl ? "Обновить визитку" : "Опубликовать визитку"}
       </button>
     </div>
   );

@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "name": "Get missing card",
+      "method": "GET",
+      "path": "/?slug=nonexistent",
+      "expectedStatus": 404,
+      "expectedBody": {"error": "not found"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

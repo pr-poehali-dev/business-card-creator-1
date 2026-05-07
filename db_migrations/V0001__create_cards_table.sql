@@ -1,0 +1,8 @@
+CREATE TABLE t_p34109267_business_card_creato.cards (
+  id SERIAL PRIMARY KEY,
+  slug VARCHAR(32) NOT NULL UNIQUE,
+  fields JSONB NOT NULL DEFAULT '[]',
+  style JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

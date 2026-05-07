@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Publish card",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "fields": [{"id": "test1", "type": "name", "value": "Иван Петров", "visible": true}],
+        "style": {"bg": "#ffffff", "textColor": "#111111", "accentColor": "#f97316", "fontStyle": "modern"}
+      },
+      "expectedStatus": 200,
+      "expectedBody": {"slug": "string", "url": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
