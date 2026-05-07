@@ -31,18 +31,21 @@ export const FIELD_META: Record<FieldType, { label: string; icon: string; placeh
   company:   { label: "Компания",   icon: "Building2",   placeholder: "ООО «Ромашка»" },
   phone:     { label: "Телефон",    icon: "Phone",       placeholder: "+7 (999) 123-45-67" },
   email:     { label: "Email",      icon: "Mail",        placeholder: "ivan@example.com" },
-  website:   { label: "Сайт",       icon: "Globe",       placeholder: "example.com" },
+  website:   { label: "Сайт",       icon: "Globe",       placeholder: "https://example.com" },
   address:   { label: "Адрес",      icon: "MapPin",      placeholder: "Москва, ул. Тверская, 1" },
   note:      { label: "Заметка",    icon: "FileText",    placeholder: "Любой текст..." },
   // Соцсети
-  telegram:  { label: "Telegram",   icon: "Send",        placeholder: "@username" },
-  max:       { label: "Max",        icon: "MessageCircle", placeholder: "@username" },
-  instagram: { label: "Instagram",  icon: "Camera",      placeholder: "@username" },
+  telegram:  { label: "Telegram",   icon: "Send",        placeholder: "https://t.me/username" },
+  max:       { label: "Max",        icon: "MessageCircle", placeholder: "https://max.ru/username" },
+  instagram: { label: "Instagram",  icon: "Camera",      placeholder: "https://instagram.com/username" },
   // Локация
   location:  { label: "Локация",    icon: "Navigation",  placeholder: "Название места" },
   // Кастомное
-  custom:    { label: "Своё поле",  icon: "Tag",         placeholder: "Значение поля" },
+  custom:    { label: "Своё поле",  icon: "Tag",         placeholder: "https://ссылка..." },
 };
+
+// Типы которые отображаются как кнопка (value = ссылка, label = название кнопки)
+export const BUTTON_TYPES: FieldType[] = ["telegram", "max", "instagram", "website", "custom"];
 
 // Типы для которых один раз создаётся (без дублей)
 export const UNIQUE_TYPES: FieldType[] = [

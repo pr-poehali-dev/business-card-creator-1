@@ -1,5 +1,5 @@
 import Icon from "@/components/ui/icon";
-import { CardField, CardStyle, FIELD_META } from "./types";
+import { CardField, CardStyle, FIELD_META, BUTTON_TYPES } from "./types";
 
 const CONTACT_TYPES = ["phone", "email", "website", "address", "note", "telegram", "max", "instagram", "location", "custom"];
 
@@ -55,8 +55,28 @@ function CardVisual({ fields, style }: { fields: CardField[]; style: CardStyle; 
       </div>
 
       {contacts.length > 0 && (
-        <div className="p-5 space-y-3">
-          {contacts.map(f => (
+        <div className="p-5 space-y-2">
+          {/* Button-style fields: telegram, max, instagram, website, custom */}
+          {contacts.some(f => BUTTON_TYPES.includes(f.type)) && (
+            <div className="flex flex-wrap gap-2 mb-1">
+              {contacts.filter(f => BUTTON_TYPES.includes(f.type)).map(f => (
+                <a
+                  key={f.id}
+                  href={f.value || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-opacity hover:opacity-80"
+                  style={{ background: style.accentColor + "18", color: style.accentColor }}
+                >
+                  <Icon name={FIELD_META[f.type].icon} size={12} style={{ color: style.accentColor }} />
+                  {getLabel(f)}
+                </a>
+              ))}
+            </div>
+          )}
+
+          {/* Row-style fields: phone, email, address, note, location */}
+          {contacts.filter(f => !BUTTON_TYPES.includes(f.type)).map(f => (
             <div key={f.id} className="flex items-start gap-3">
               <div
                 className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5"
@@ -65,8 +85,7 @@ function CardVisual({ fields, style }: { fields: CardField[]; style: CardStyle; 
                 <Icon name={FIELD_META[f.type].icon} size={13} style={{ color: style.accentColor }} />
               </div>
               <div className="flex-1 min-w-0">
-                {/* For location and custom — show label above value */}
-                {(f.type === "location" || f.type === "custom") && (
+                {f.type === "location" && (
                   <div className="text-[10px] mb-0.5" style={{ opacity: 0.5 }}>
                     {getLabel(f)}
                   </div>
