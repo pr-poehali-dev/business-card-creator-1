@@ -5,7 +5,7 @@ const CONTACT_TYPES = ["phone", "email", "website", "address", "note", "telegram
 
 // ─── Card visual ─────────────────────────────────────────────────────────────
 
-function CardVisual({ fields, style }: { fields: CardField[]; style: CardStyle }) {
+function CardVisual({ fields, style }: { fields: CardField[]; style: CardStyle; }) {
   const vis      = fields.filter(f => f.visible && f.value.trim());
   const nameF    = vis.find(f => f.type === "name");
   const titleF   = vis.find(f => f.type === "title");
@@ -29,10 +29,14 @@ function CardVisual({ fields, style }: { fields: CardField[]; style: CardStyle }
     >
       <div className="p-6" style={{ borderBottom: `1px solid ${style.textColor}15` }}>
         <div
-          className="w-11 h-11 rounded-full mb-4 flex items-center justify-center text-base font-bold text-white"
+          className="w-14 h-14 rounded-full mb-4 flex items-center justify-center text-base font-bold text-white overflow-hidden shrink-0"
           style={{ background: style.accentColor }}
         >
-          {nameF?.value?.charAt(0) ?? "?"}
+          {style.avatar ? (
+            <img src={style.avatar} alt="avatar" className="w-full h-full object-cover" />
+          ) : (
+            nameF?.value?.charAt(0) ?? "?"
+          )}
         </div>
         {nameF && (
           <div className={`text-xl leading-tight ${fontClass}`}>{nameF.value}</div>

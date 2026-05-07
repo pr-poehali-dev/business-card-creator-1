@@ -106,13 +106,16 @@ function AnalyticsChart() {
   );
 }
 
-// ─── Field Row (draggable) ───────────────────────────────────────────────────
+// ─── Field Row ───────────────────────────────────────────────────────────────
+// dragFromIndex — ref из родителя, общий для всего списка
 
 function FieldItem({
-  field, index,
+  field, index, dragFromIndex,
   onMove, onToggle, onChangeValue, onChangeLabel, onChangeSecondary, onRemove,
 }: {
-  field: CardField; index: number;
+  field: CardField;
+  index: number;
+  dragFromIndex: React.MutableRefObject<number | null>;
   onMove: (from: number, to: number) => void;
   onToggle: (id: string) => void;
   onChangeValue: (id: string, value: string) => void;
@@ -120,18 +123,25 @@ function FieldItem({
   onChangeSecondary: (id: string, value: string) => void;
   onRemove: (id: string) => void;
 }) {
-  const dragFrom = useRef<number | null>(null);
-  const meta = FIELD_META[field.type];
+  const meta       = FIELD_META[field.type];
   const isCustom   = field.type === "custom";
   const isLocation = field.type === "location";
-  const displayLabel = isCustom ? (field.label || meta.label) : meta.label;
 
   return (
     <div
       draggable
-      onDragStart={e => { dragFrom.current = index; e.dataTransfer.effectAllowed = "move"; }}
+      onDragStart={e => {
+        dragFromIndex.current = index;
+        e.dataTransfer.effectAllowed = "move";
+      }}
       onDragOver={e => e.preventDefault()}
-      onDrop={e => { e.preventDefault(); if (dragFrom.current !== null && dragFrom.current !== index) onMove(dragFrom.current, index); }}
+      onDrop={e => {
+        e.preventDefault();
+        if (dragFromIndex.current !== null && dragFromIndex.current !== index) {
+          onMove(dragFromIndex.current, index);
+          dragFromIndex.current = null;
+        }
+      }}
       className={`group bg-card border border-border rounded-lg cursor-grab active:cursor-grabbing transition-all duration-150 hover:border-foreground/20 hover:shadow-sm ${!field.visible ? "opacity-40" : ""}`}
     >
       {/* Main row */}
@@ -143,7 +153,6 @@ function FieldItem({
         </div>
 
         <div className="flex-1 min-w-0">
-          {/* Label row: editable for custom */}
           {isCustom ? (
             <input
               className="w-full text-[10px] text-muted-foreground uppercase tracking-wide bg-transparent outline-none placeholder:text-muted-foreground/40 mb-0.5"
@@ -152,9 +161,8 @@ function FieldItem({
               onChange={e => onChangeLabel(field.id, e.target.value)}
             />
           ) : (
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{displayLabel}</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{meta.label}</div>
           )}
-          {/* Main value */}
           <input
             className="w-full text-sm bg-transparent text-foreground placeholder:text-muted-foreground/50 outline-none"
             value={field.value}
@@ -179,7 +187,7 @@ function FieldItem({
         </div>
       </div>
 
-      {/* Location: secondary input for maps URL */}
+      {/* Location: secondary input */}
       {isLocation && (
         <div className="px-3 pb-3 pl-[52px]">
           <input
@@ -196,20 +204,13 @@ function FieldItem({
 
 // ─── Add Field Menu ───────────────────────────────────────────────────────────
 
-function AddFieldMenu({
-  fields,
-  onAdd,
-  onClose,
-}: {
+function AddFieldMenu({ fields, onAdd, onClose }: {
   fields: CardField[];
   onAdd: (type: FieldType) => void;
   onClose: () => void;
 }) {
-  // Для уникальных типов — скрываем уже добавленные
-  const isAvailable = (type: FieldType) => {
-    if (UNIQUE_TYPES.includes(type)) return !fields.some(f => f.type === type);
-    return true; // location, note, custom — можно несколько
-  };
+  const isAvailable = (type: FieldType) =>
+    UNIQUE_TYPES.includes(type) ? !fields.some(f => f.type === type) : true;
 
   return (
     <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 animate-scale-in">
@@ -238,6 +239,70 @@ function AddFieldMenu({
   );
 }
 
+// ─── Avatar Upload ────────────────────────────────────────────────────────────
+
+function AvatarUpload({ avatar, onUpload, onRemove, accentColor }: {
+  avatar?: string;
+  onUpload: (dataUrl: string) => void;
+  onRemove: () => void;
+  accentColor: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      if (ev.target?.result) onUpload(ev.target.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  return (
+    <div className="flex items-center gap-4">
+      <div
+        className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden border-2 border-dashed border-border shrink-0 cursor-pointer hover:border-foreground/30 transition-colors"
+        style={{ background: avatar ? "transparent" : accentColor + "12" }}
+        onClick={() => inputRef.current?.click()}
+      >
+        {avatar ? (
+          <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
+        ) : (
+          <Icon name="UserRound" size={22} className="text-muted-foreground" />
+        )}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <button
+          onClick={() => inputRef.current?.click()}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-md hover:border-foreground/30 hover:bg-secondary text-foreground transition-all"
+        >
+          <Icon name="Upload" size={12} />
+          {avatar ? "Заменить фото" : "Загрузить фото"}
+        </button>
+        {avatar && (
+          <button
+            onClick={onRemove}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <Icon name="Trash2" size={12} />
+            Удалить
+          </button>
+        )}
+        <span className="text-[10px] text-muted-foreground">JPG, PNG до 5 МБ</span>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFile}
+      />
+    </div>
+  );
+}
+
 // ─── CardEditor ──────────────────────────────────────────────────────────────
 
 interface CardEditorProps {
@@ -260,6 +325,9 @@ export default function CardEditor({
   moveField, toggleField, changeValue, changeLabel, changeSecondary, removeField, addField,
 }: CardEditorProps) {
   const [addMenuOpen, setAddMenu] = useState(false);
+
+  // Shared ref for drag-and-drop — one ref for entire list, not per-item
+  const dragFromIndex = useRef<number | null>(null);
 
   const TABS: { id: Tab; label: string; icon: string }[] = [
     { id: "editor",    label: "Редактор",  icon: "Pencil" },
@@ -290,11 +358,27 @@ export default function CardEditor({
       {/* Editor tab */}
       {activeTab === "editor" && (
         <div className="animate-fade-in space-y-2">
+
+          {/* Avatar upload block */}
+          <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+            <div className="text-xs font-medium text-foreground uppercase tracking-widest">Фото</div>
+            <AvatarUpload
+              avatar={cardStyle.avatar}
+              accentColor={cardStyle.accentColor}
+              onUpload={dataUrl => setStyle(s => ({ ...s, avatar: dataUrl }))}
+              onRemove={() => setStyle(s => ({ ...s, avatar: undefined }))}
+            />
+          </div>
+
+          {/* Fields list */}
           {fields.map((field, idx) => (
             <FieldItem
               key={field.id}
-              field={field} index={idx}
-              onMove={moveField} onToggle={toggleField}
+              field={field}
+              index={idx}
+              dragFromIndex={dragFromIndex}
+              onMove={moveField}
+              onToggle={toggleField}
               onChangeValue={changeValue}
               onChangeLabel={changeLabel}
               onChangeSecondary={changeSecondary}

@@ -19,6 +19,7 @@ export interface CardStyle {
   textColor: string;
   accentColor: string;
   fontStyle: "modern" | "classic" | "bold";
+  avatar?: string; // base64 data URL
 }
 
 export type Tab = "editor" | "qr" | "analytics";
