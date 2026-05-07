@@ -1,10 +1,17 @@
-export type FieldType = "name" | "title" | "company" | "phone" | "email" | "website" | "address" | "note";
+export type FieldType =
+  | "name" | "title" | "company"
+  | "phone" | "email" | "website" | "address" | "note"
+  | "telegram" | "max" | "instagram"
+  | "location"
+  | "custom";
 
 export interface CardField {
   id: string;
   type: FieldType;
   value: string;
   visible: boolean;
+  label?: string;           // кастомный лейбл (для type="custom")
+  secondaryValue?: string;  // второе значение (для type="location" — ссылка из карт)
 }
 
 export interface CardStyle {
@@ -17,15 +24,38 @@ export interface CardStyle {
 export type Tab = "editor" | "qr" | "analytics";
 
 export const FIELD_META: Record<FieldType, { label: string; icon: string; placeholder: string }> = {
-  name:    { label: "Имя",       icon: "User",      placeholder: "Иван Петров" },
-  title:   { label: "Должность", icon: "Briefcase", placeholder: "Директор по маркетингу" },
-  company: { label: "Компания",  icon: "Building2", placeholder: "ООО «Ромашка»" },
-  phone:   { label: "Телефон",   icon: "Phone",     placeholder: "+7 (999) 123-45-67" },
-  email:   { label: "Email",     icon: "Mail",      placeholder: "ivan@example.com" },
-  website: { label: "Сайт",      icon: "Globe",     placeholder: "example.com" },
-  address: { label: "Адрес",     icon: "MapPin",    placeholder: "Москва, ул. Тверская, 1" },
-  note:    { label: "Заметка",   icon: "FileText",  placeholder: "Любой текст..." },
+  // Основные
+  name:      { label: "Имя",        icon: "User",        placeholder: "Иван Петров" },
+  title:     { label: "Должность",  icon: "Briefcase",   placeholder: "Директор по маркетингу" },
+  company:   { label: "Компания",   icon: "Building2",   placeholder: "ООО «Ромашка»" },
+  phone:     { label: "Телефон",    icon: "Phone",       placeholder: "+7 (999) 123-45-67" },
+  email:     { label: "Email",      icon: "Mail",        placeholder: "ivan@example.com" },
+  website:   { label: "Сайт",       icon: "Globe",       placeholder: "example.com" },
+  address:   { label: "Адрес",      icon: "MapPin",      placeholder: "Москва, ул. Тверская, 1" },
+  note:      { label: "Заметка",    icon: "FileText",    placeholder: "Любой текст..." },
+  // Соцсети
+  telegram:  { label: "Telegram",   icon: "Send",        placeholder: "@username" },
+  max:       { label: "Max",        icon: "MessageCircle", placeholder: "@username" },
+  instagram: { label: "Instagram",  icon: "Camera",      placeholder: "@username" },
+  // Локация
+  location:  { label: "Локация",    icon: "Navigation",  placeholder: "Название места" },
+  // Кастомное
+  custom:    { label: "Своё поле",  icon: "Tag",         placeholder: "Значение поля" },
 };
+
+// Типы для которых один раз создаётся (без дублей)
+export const UNIQUE_TYPES: FieldType[] = [
+  "name", "title", "company", "phone", "email", "website",
+  "telegram", "max", "instagram",
+];
+
+// Группы для меню добавления
+export const FIELD_GROUPS: { label: string; types: FieldType[] }[] = [
+  { label: "Основные",  types: ["name", "title", "company", "phone", "email", "website", "address", "note"] },
+  { label: "Соцсети",   types: ["telegram", "max", "instagram"] },
+  { label: "Локация",   types: ["location"] },
+  { label: "Кастомное", types: ["custom"] },
+];
 
 export const BG_PRESETS = [
   { bg: "#ffffff", text: "#111111", accent: "#f97316" },
@@ -49,10 +79,10 @@ export const ANALYTICS_DATA = [
 export const makeId = () => Math.random().toString(36).slice(2, 9);
 
 export const DEFAULT_FIELDS: CardField[] = [
-  { id: makeId(), type: "name",    value: "Иван Петров",            visible: true },
-  { id: makeId(), type: "title",   value: "Директор по маркетингу", visible: true },
-  { id: makeId(), type: "company", value: "ООО «Ромашка»",         visible: true },
-  { id: makeId(), type: "phone",   value: "+7 (999) 123-45-67",     visible: true },
-  { id: makeId(), type: "email",   value: "ivan@example.com",       visible: true },
-  { id: makeId(), type: "website", value: "example.com",            visible: true },
+  { id: makeId(), type: "name",     value: "Иван Петров",            visible: true },
+  { id: makeId(), type: "title",    value: "Директор по маркетингу", visible: true },
+  { id: makeId(), type: "company",  value: "ООО «Ромашка»",         visible: true },
+  { id: makeId(), type: "phone",    value: "+7 (999) 123-45-67",     visible: true },
+  { id: makeId(), type: "email",    value: "ivan@example.com",       visible: true },
+  { id: makeId(), type: "website",  value: "example.com",            visible: true },
 ];

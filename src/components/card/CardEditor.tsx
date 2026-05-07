@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import Icon from "@/components/ui/icon";
 import {
   CardField, CardStyle, Tab, FieldType,
-  FIELD_META, BG_PRESETS, ANALYTICS_DATA, makeId,
+  FIELD_META, FIELD_GROUPS, UNIQUE_TYPES, BG_PRESETS, ANALYTICS_DATA,
 } from "./types";
 
 // ─── QR Code visual ──────────────────────────────────────────────────────────
@@ -73,11 +73,7 @@ function AnalyticsChart() {
               <div className="w-full flex flex-col items-center justify-end" style={{ height: 88 }}>
                 <div
                   className="w-full rounded-sm"
-                  style={{
-                    height: `${(d.views / maxViews) * 100}%`,
-                    background: "hsl(var(--accent))",
-                    minHeight: 4,
-                  }}
+                  style={{ height: `${(d.views / maxViews) * 100}%`, background: "hsl(var(--accent))", minHeight: 4 }}
                 />
               </div>
               <span className="text-[10px] text-muted-foreground">{d.day}</span>
@@ -100,10 +96,7 @@ function AnalyticsChart() {
                 <span className="text-muted-foreground">{s.pct}%</span>
               </div>
               <div className="h-1 bg-secondary rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: `${s.pct}%`, background: "hsl(var(--accent))" }}
-                />
+                <div className="h-full rounded-full" style={{ width: `${s.pct}%`, background: "hsl(var(--accent))" }} />
               </div>
             </div>
           ))}
@@ -117,16 +110,21 @@ function AnalyticsChart() {
 
 function FieldItem({
   field, index,
-  onMove, onToggle, onChangeValue, onRemove,
+  onMove, onToggle, onChangeValue, onChangeLabel, onChangeSecondary, onRemove,
 }: {
   field: CardField; index: number;
   onMove: (from: number, to: number) => void;
   onToggle: (id: string) => void;
   onChangeValue: (id: string, value: string) => void;
+  onChangeLabel: (id: string, label: string) => void;
+  onChangeSecondary: (id: string, value: string) => void;
   onRemove: (id: string) => void;
 }) {
   const dragFrom = useRef<number | null>(null);
   const meta = FIELD_META[field.type];
+  const isCustom   = field.type === "custom";
+  const isLocation = field.type === "location";
+  const displayLabel = isCustom ? (field.label || meta.label) : meta.label;
 
   return (
     <div
@@ -134,38 +132,108 @@ function FieldItem({
       onDragStart={e => { dragFrom.current = index; e.dataTransfer.effectAllowed = "move"; }}
       onDragOver={e => e.preventDefault()}
       onDrop={e => { e.preventDefault(); if (dragFrom.current !== null && dragFrom.current !== index) onMove(dragFrom.current, index); }}
-      className={`group flex items-center gap-3 p-3 bg-card border border-border rounded-lg cursor-grab active:cursor-grabbing transition-all duration-150 hover:border-foreground/20 hover:shadow-sm ${!field.visible ? "opacity-40" : ""}`}
+      className={`group bg-card border border-border rounded-lg cursor-grab active:cursor-grabbing transition-all duration-150 hover:border-foreground/20 hover:shadow-sm ${!field.visible ? "opacity-40" : ""}`}
     >
-      <Icon name="GripVertical" size={14} className="text-muted-foreground shrink-0" />
+      {/* Main row */}
+      <div className="flex items-center gap-3 p-3">
+        <Icon name="GripVertical" size={14} className="text-muted-foreground shrink-0" />
 
-      <div className="w-7 h-7 rounded-md bg-secondary flex items-center justify-center shrink-0">
-        <Icon name={meta.icon} size={13} className="text-muted-foreground" />
+        <div className="w-7 h-7 rounded-md bg-secondary flex items-center justify-center shrink-0">
+          <Icon name={meta.icon} size={13} className="text-muted-foreground" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          {/* Label row: editable for custom */}
+          {isCustom ? (
+            <input
+              className="w-full text-[10px] text-muted-foreground uppercase tracking-wide bg-transparent outline-none placeholder:text-muted-foreground/40 mb-0.5"
+              value={field.label ?? ""}
+              placeholder="Название поля"
+              onChange={e => onChangeLabel(field.id, e.target.value)}
+            />
+          ) : (
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{displayLabel}</div>
+          )}
+          {/* Main value */}
+          <input
+            className="w-full text-sm bg-transparent text-foreground placeholder:text-muted-foreground/50 outline-none"
+            value={field.value}
+            placeholder={isLocation ? "Название места" : meta.placeholder}
+            onChange={e => onChangeValue(field.id, e.target.value)}
+          />
+        </div>
+
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => onToggle(field.id)}
+            className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
+            <Icon name={field.visible ? "Eye" : "EyeOff"} size={13} />
+          </button>
+          <button
+            onClick={() => onRemove(field.id)}
+            className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <Icon name="Trash2" size={13} />
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{meta.label}</div>
-        <input
-          className="w-full text-sm bg-transparent text-foreground placeholder:text-muted-foreground/50 outline-none"
-          value={field.value}
-          placeholder={meta.placeholder}
-          onChange={e => onChangeValue(field.id, e.target.value)}
-        />
-      </div>
+      {/* Location: secondary input for maps URL */}
+      {isLocation && (
+        <div className="px-3 pb-3 pl-[52px]">
+          <input
+            className="w-full text-xs bg-secondary/60 text-muted-foreground placeholder:text-muted-foreground/40 outline-none rounded px-2 py-1.5"
+            value={field.secondaryValue ?? ""}
+            placeholder="Ссылка из карт (https://maps.app.goo.gl/...)"
+            onChange={e => onChangeSecondary(field.id, e.target.value)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={() => onToggle(field.id)}
-          className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-        >
-          <Icon name={field.visible ? "Eye" : "EyeOff"} size={13} />
-        </button>
-        <button
-          onClick={() => onRemove(field.id)}
-          className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-        >
-          <Icon name="Trash2" size={13} />
-        </button>
-      </div>
+// ─── Add Field Menu ───────────────────────────────────────────────────────────
+
+function AddFieldMenu({
+  fields,
+  onAdd,
+  onClose,
+}: {
+  fields: CardField[];
+  onAdd: (type: FieldType) => void;
+  onClose: () => void;
+}) {
+  // Для уникальных типов — скрываем уже добавленные
+  const isAvailable = (type: FieldType) => {
+    if (UNIQUE_TYPES.includes(type)) return !fields.some(f => f.type === type);
+    return true; // location, note, custom — можно несколько
+  };
+
+  return (
+    <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 animate-scale-in">
+      {FIELD_GROUPS.map(group => {
+        const available = group.types.filter(isAvailable);
+        if (available.length === 0) return null;
+        return (
+          <div key={group.label}>
+            <div className="px-4 py-2 text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary/50 font-medium">
+              {group.label}
+            </div>
+            {available.map(type => (
+              <button
+                key={type}
+                onClick={() => { onAdd(type); onClose(); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+              >
+                <Icon name={FIELD_META[type].icon} size={14} className="text-muted-foreground" />
+                {FIELD_META[type].label}
+              </button>
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -181,21 +249,17 @@ interface CardEditorProps {
   moveField: (from: number, to: number) => void;
   toggleField: (id: string) => void;
   changeValue: (id: string, value: string) => void;
+  changeLabel: (id: string, label: string) => void;
+  changeSecondary: (id: string, value: string) => void;
   removeField: (id: string) => void;
   addField: (type: FieldType) => void;
 }
 
 export default function CardEditor({
   fields, cardStyle, activeTab, setTab, setStyle,
-  moveField, toggleField, changeValue, removeField, addField,
+  moveField, toggleField, changeValue, changeLabel, changeSecondary, removeField, addField,
 }: CardEditorProps) {
   const [addMenuOpen, setAddMenu] = useState(false);
-
-  const allTypes     = Object.keys(FIELD_META) as FieldType[];
-  const unusedTypes  = allTypes.filter(t => t !== "note" && !fields.some(f => f.type === t));
-  const addableTypes = unusedTypes.length > 0 ? unusedTypes : ["note" as FieldType];
-
-  const handleAdd = (type: FieldType) => { addField(type); setAddMenu(false); };
 
   const TABS: { id: Tab; label: string; icon: string }[] = [
     { id: "editor",    label: "Редактор",  icon: "Pencil" },
@@ -231,7 +295,10 @@ export default function CardEditor({
               key={field.id}
               field={field} index={idx}
               onMove={moveField} onToggle={toggleField}
-              onChangeValue={changeValue} onRemove={removeField}
+              onChangeValue={changeValue}
+              onChangeLabel={changeLabel}
+              onChangeSecondary={changeSecondary}
+              onRemove={removeField}
             />
           ))}
 
@@ -245,18 +312,11 @@ export default function CardEditor({
               Добавить поле
             </button>
             {addMenuOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 animate-scale-in">
-                {addableTypes.map(type => (
-                  <button
-                    key={type}
-                    onClick={() => handleAdd(type)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
-                  >
-                    <Icon name={FIELD_META[type].icon} size={14} className="text-muted-foreground" />
-                    {FIELD_META[type].label}
-                  </button>
-                ))}
-              </div>
+              <AddFieldMenu
+                fields={fields}
+                onAdd={addField}
+                onClose={() => setAddMenu(false)}
+              />
             )}
           </div>
 

@@ -1,6 +1,8 @@
 import Icon from "@/components/ui/icon";
 import { CardField, CardStyle, FIELD_META } from "./types";
 
+const CONTACT_TYPES = ["phone", "email", "website", "address", "note", "telegram", "max", "instagram", "location", "custom"];
+
 // ─── Card visual ─────────────────────────────────────────────────────────────
 
 function CardVisual({ fields, style }: { fields: CardField[]; style: CardStyle }) {
@@ -8,12 +10,17 @@ function CardVisual({ fields, style }: { fields: CardField[]; style: CardStyle }
   const nameF    = vis.find(f => f.type === "name");
   const titleF   = vis.find(f => f.type === "title");
   const compF    = vis.find(f => f.type === "company");
-  const contacts = vis.filter(f => ["phone", "email", "website", "address", "note"].includes(f.type));
+  const contacts = vis.filter(f => CONTACT_TYPES.includes(f.type));
 
   const fontClass =
     style.fontStyle === "classic" ? "font-cormorant" :
     style.fontStyle === "bold"    ? "font-golos font-extrabold" :
     "font-golos font-semibold";
+
+  const getLabel = (f: CardField) => {
+    if (f.type === "custom") return f.label || FIELD_META[f.type].label;
+    return FIELD_META[f.type].label;
+  };
 
   return (
     <div
@@ -46,14 +53,36 @@ function CardVisual({ fields, style }: { fields: CardField[]; style: CardStyle }
       {contacts.length > 0 && (
         <div className="p-5 space-y-3">
           {contacts.map(f => (
-            <div key={f.id} className="flex items-center gap-3">
+            <div key={f.id} className="flex items-start gap-3">
               <div
-                className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
+                className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5"
                 style={{ background: style.accentColor + "18" }}
               >
                 <Icon name={FIELD_META[f.type].icon} size={13} style={{ color: style.accentColor }} />
               </div>
-              <span className="text-sm truncate" style={{ opacity: 0.82 }}>{f.value}</span>
+              <div className="flex-1 min-w-0">
+                {/* For location and custom — show label above value */}
+                {(f.type === "location" || f.type === "custom") && (
+                  <div className="text-[10px] mb-0.5" style={{ opacity: 0.5 }}>
+                    {getLabel(f)}
+                  </div>
+                )}
+                <span className="text-sm truncate block" style={{ opacity: 0.82 }}>
+                  {f.type === "location" && f.secondaryValue ? (
+                    <a
+                      href={f.secondaryValue}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2"
+                      style={{ color: style.accentColor }}
+                    >
+                      {f.value}
+                    </a>
+                  ) : (
+                    f.value
+                  )}
+                </span>
+              </div>
             </div>
           ))}
         </div>
